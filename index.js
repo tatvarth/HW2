@@ -1,26 +1,41 @@
 #!/usr/bin/env babel-node
+require('./helper');
+let path = require('path');
+let fs = require('fs').promise;
+let asyncHandlerPlugin = require('hapi-async-handler')
+let Hapi = require('hapi')
 
-require('./helper')
-
-const path = require('path')
-const fs = require('fs').promise
-const Hapi = require('hapi')
-const asyncHandlerPlugin = require('hapi-async-handler')
-
-// const cat = require('./cat')
+ //let cat = require('./cat')
 // const rm = require('./rm')
 // const mkdir = require('./mkdir')
 // const touch = require('./touch')
 
 function getLocalFilePathFromRequest(request) {
-  return path.join(__dirname, 'files', request.params.file)
+  let pathName = ""
+  try{
+     pathName = path.join(__dirname, 'files', request.params.file)
+
+  }catch(e){
+    console.log(e)
+  }
+  return pathName
 }
 
+async function cat (fileName) {
+  console.log('Executing cat function...for '+fileName);
+  try {
+    return await fs.readFile(fileName,'utf8');
+  }
+  catch (err) { console.error( err ) }
+}
 async function readHandler(request, reply) {
-  const filePath = getLocalFilePathFromRequest(request)
+  let filePath = getLocalFilePathFromRequest(request)
+  console.log(`Reading ${filePath}`);
 
-  console.log(`Reading ${filePath}`)
-  const data = await cat(filePath)
+
+ let data = await cat(filePath);
+  console.log(data);
+
   reply(data)
 }
 
@@ -52,14 +67,15 @@ async function deleteHandler(request, reply) {
 }
 
 async function main() {
-  const port = 8000
-  const server = new Hapi.Server({
+  let port = 8000
+  let server = new Hapi.Server({
     debug: {
       request: ['errors']
     }
   })
   server.register(asyncHandlerPlugin)
-  server.connection({ port })
+
+  server.connection({ port:port })
 
   server.route([
     // READ
